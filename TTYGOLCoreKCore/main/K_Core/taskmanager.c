@@ -2,6 +2,7 @@
 #include "main.h"
 #include "taskmanager.h"
 #include "L_Core/bluetooth/ble.h"
+#include "K_Core/gpio/pinout.h"
 #include "K_Core/adc/adc.h"
 #include "K_Core/serial/serial.h"
 #include "K_Core/communication/parser.h"
@@ -109,6 +110,8 @@ void Spare(void)
 void BlinkHeartBeat(void)
 {	
 	HeartBeat++;
+	if (HeartBeat & 0x1) gpio_set_level(LCD_BL, 1);
+	else gpio_set_level(LCD_BL, 0);
 	//AddSerialStringToBuffer(&ComUart.TxBuffer, "a");
 	//AddSerialStringToBuffer(&Com485.TxBuffer, "b");
 }
