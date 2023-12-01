@@ -21,11 +21,18 @@
 #include <driver/gpio.h>
 
 #include "configure.h"
+#include "K_Core/gpio/pinout.h"
 
 
 #ifdef USE_UI
+#ifdef ESP32_SC01
 #include "L_Core/devices/conf_WT32SCO1-Plus.h"
 #include "L_Core/devices/display.h"
+#include "L_Core/ui/ui.h"
+#endif
+#ifdef ESP32_TTYGO
+#include "L_Core/devices/display_7789v.h"
+#endif
 #include "L_Core/ui/ui.h"
 #endif
 

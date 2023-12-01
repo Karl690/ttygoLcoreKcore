@@ -16,7 +16,7 @@ void tools_init()
 	storage_nvs_get_blob(NVS_KEY_TOOLINFO, &toolInfo);
 	if (toolInfo.Address >= 99) toolInfo.Address = 99;
 #ifdef USE_UI
-	ui_ble_set_headindex(toolInfo.Address);
+	// ui_ble_set_headindex(toolInfo.Address);
 #endif
 }
 

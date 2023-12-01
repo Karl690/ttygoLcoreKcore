@@ -3,77 +3,37 @@
 #include "K_Core/K_Core.h"
 #include "L_Core/open62541/opc.h"
 #include "L_Core/wifi/wifi.h"
+#include "L_Core/bluetooth/ble.h"
 #include "K_Core/adc/adc.h"
+#include "K_Core/gpio/GPIO.h"
 #include "RevisionHistory.h"
-
-DisplayVariableInfo LcdVarsTable[] = {
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	//{ &OpcRunning, "OPC Status", FUNC_BOOLEAN, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	//{ &OpcHeartBeat, "OPC HeartBeat", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &ADC_Channel[0].convAvg, "ADC CH0", FUNC_FLOAT, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &ADC_Channel[0].adcAvg, "ADC CH0-Raw", FUNC_INT16, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &ADC_Channel[1].convAvg, "ADC CH1", FUNC_FLOAT, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &ADC_Channel[1].adcAvg, "ADC CH1-Raw", FUNC_INT16, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &ADC_Channel[2].convAvg, "ADC CH2", FUNC_FLOAT, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &ADC_Channel[2].adcAvg, "ADC CH2-Raw", FUNC_INT16, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-//	{ &ADC_Channel[3].convAvg, "ADC CH3", FUNC_FLOAT, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-//	{ &ADC_Channel[3].adcAvg, "ADC CH3-Raw", FUNC_INT16, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-//	{ &ADC_Channel[4].convAvg, "ADC CH4", FUNC_FLOAT, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-//	{ &ADC_Channel[4].adcAvg, "ADC CH4-Raw", FUNC_INT16, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
+#include "L_Core/ui/ui-variables.h"
+const char *BLE_STATUS[4] = { "Listening", "Paired", "Connected", "Headset" };
+DisplayVariableInfo GeneralVarsTable[] = {
+	{ (void*)1, "SYSTEM", FUNC_TITLE, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &MajorStep, "Version", FUNC_ASCII, COLOR_WHITE, COLOR_WHITE, 0, NULL },
+	{ &RevisionDate, "Build", FUNC_ASCII, COLOR_WHITE, COLOR_WHITE, 0, NULL },
+	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &gpio_key_status, "KEY", FUNC_BOOLEAN, COLOR_WHITE, COLOR_GREEN, 0, NULL },
 	{ 0 },
 };
 
-
-DisplayVariableInfo Lcd1VarsTable[] = {
-	{ &ipAddress, "WIFI IP", FUNC_ASCII, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-//	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-//	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-//	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-//	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-//	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-//	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-//	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-//	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-//	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },	
+DisplayVariableInfo BluetoothVarsTable[] = {
+	{ (void*)1, "BLUETOOTH", FUNC_TITLE, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &ble_server_status, "STATUS", FUNC_BAR_STATUS, COLOR_WHITE, COLOR_GREEN, (uint32_t)(void*)BLE_STATUS, NULL },
+	{ &ble_server_total_sent, "XMT#", FUNC_INT, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &ble_server_status, "REV#", FUNC_INT, COLOR_WHITE, COLOR_RED, 0, NULL },
 	{ 0 },
 };
 
-DisplayVariableInfo Lcd2VarsTable[] = {
-	{ &HeartBeat, "TITLE2", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &ipAddress, "WIFI IP", FUNC_ASCII, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },	
-	{ 0 },
-};
-DisplayVariableInfo Lcd3VarsTable[] = {
-	{ &HeartBeat, "TITLE3", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &ipAddress, "WIFI IP", FUNC_ASCII, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },
-	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_RED, 0, 0, NULL },	
+DisplayVariableInfo AdcVarsTable[] = {
+	{ (void*)1, "ADC", FUNC_TITLE, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &ADC_Channel[0].convAvg, "CH0", FUNC_FLOAT, COLOR_WHITE, COLOR_RED, 0, NULL },
+	{ &ADC_Channel[0].adcAvg, "CH0-Raw", FUNC_INT16, COLOR_WHITE, COLOR_RED, 0, NULL },
+	{ &ADC_Channel[1].convAvg, "CH1", FUNC_FLOAT, COLOR_WHITE, COLOR_RED, 0, NULL },
+	{ &ADC_Channel[1].adcAvg, "CH1-Raw", FUNC_INT16, COLOR_WHITE, COLOR_RED, 0, NULL },
+	{ &ADC_Channel[2].convAvg, "CH2", FUNC_FLOAT, COLOR_WHITE, COLOR_RED, 0, NULL },
+	{ &ADC_Channel[2].adcAvg, "CH2-Raw", FUNC_INT16, COLOR_WHITE, COLOR_RED, 0, NULL },
 	{ 0 },
 };
 

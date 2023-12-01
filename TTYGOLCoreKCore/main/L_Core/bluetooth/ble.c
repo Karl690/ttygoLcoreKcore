@@ -1,7 +1,7 @@
 #include "main.h"
 #include "ble.h"
 #ifdef USE_UI
-#include "../ui/ui-bluetooth.h"
+// #include "../ui/ui-bluetooth.h"
 #endif
 
 BleRemoteDevice ble_client_remote_device[BLE_CLIENT_MAX_CONNECT_NUM];
@@ -51,7 +51,7 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 		
 		ble_scan_status = BLE_CLIENT_SCAN_READY;
 #ifdef USE_UI
-		ui_ble_changed_ble_status(ble_scan_status);
+		// ui_ble_changed_ble_status(ble_scan_status);
 #endif
         //the unit of the duration is second
         //uint32_t duration = 0xFFFF;
@@ -71,14 +71,14 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
 		ble_scan_status = BLE_CLIENT_SCANNING;
 		ESP_LOGI(BLE_TAG, "Scan start successed");
 #ifdef USE_UI		
-		ui_ble_changed_ble_status(ble_scan_status);
+		// ui_ble_changed_ble_status(ble_scan_status);
 #endif		
         break;
     case ESP_GAP_BLE_SCAN_STOP_COMPLETE_EVT:
 		ESP_LOGI(BLE_TAG, "Scan stop successed");
 		ble_scan_status = BLE_CLIENT_SCAN_READY;
 #ifdef USE_UI		
-		ui_ble_changed_ble_status(ble_scan_status);
+		// ui_ble_changed_ble_status(ble_scan_status);
 #endif		
         break;
     case ESP_GAP_BLE_SCAN_RESULT_EVT: {
@@ -133,7 +133,7 @@ uint8_t ble_add_scan_device(esp_ble_gap_cb_param_t* scan_result) {
 	ble_client_remote_device[ble_client_scaned_device_num].total_sent = 0;
 	ble_client_remote_device[ble_client_scaned_device_num].total_received = 0;
 #ifdef USE_UI	
-	ui_ble_add_device(&ble_client_remote_device[ble_client_scaned_device_num]);
+	// ui_ble_add_device(&ble_client_remote_device[ble_client_scaned_device_num]);
 #endif	
 	ble_client_scaned_device_num++;
 	return 1;

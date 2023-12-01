@@ -24,8 +24,8 @@ void app_main(void)
 	IsInitialized = false;
 	
 	// storage_partition_init();
-	storage_nvs_init();
-	load_configuration();
+	//storage_nvs_init();
+	//load_configuration();
 #ifdef USE_SDCARD
 	if (sdcard_init())
 	{	

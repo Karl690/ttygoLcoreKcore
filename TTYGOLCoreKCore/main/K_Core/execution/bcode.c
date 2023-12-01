@@ -4,7 +4,7 @@
 #include "K_Core/tools/tools.h"
 #include "L_Core/bluetooth/ble.h"
 #ifdef USE_UI
-#include "L_Core/ui/ui-bluetooth.h"
+// #include "L_Core/ui/ui-bluetooth.h"
 #endif
 #include "cmdprocessor.h"
 
@@ -37,7 +37,7 @@ void BCODE_11(GMBCOMMAND* cmd)
 	storage_nvs_set_blob(NVS_KEY_TOOLINFO, &toolInfo, sizeof(ToolInfo));	
 	tools_report_register();
 #ifdef USE_UI
-	ui_ble_set_headindex(toolInfo.Address);
+	//ui_ble_set_headindex(toolInfo.Address);
 #endif
 }
 /* BCODE 100: Set the tool params

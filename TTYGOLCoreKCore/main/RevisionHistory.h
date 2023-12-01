@@ -2,12 +2,14 @@
 
 #define SYSTEMINFO "ESP32SC01-PLUS"
 #define RevisionHeader ">Hy:L_Core:"
-#define MajorStep      "1.029"
-#define RevisionDate   "11/27/2023"
+#define MajorStep      "1.030"
+#define RevisionDate   "12/30/2023"
 #define SYSTEMVERSION  MajorStep " " RevisionDate
 #define CONNECTIONSTRING ">Hy:L_Core Rev " MajorStep ":" RevisionDate ":ESP32SC01 Plus:---:\n"   //"1.000:0:0:0:USB"
 
 /* 
+1.030 11/30/2023
+    Add LVGL 
 1.029 11/27/2023
     Updated this on TTYGO 
 1.028 11/25/2023

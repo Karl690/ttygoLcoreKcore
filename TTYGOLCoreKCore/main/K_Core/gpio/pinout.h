@@ -21,7 +21,7 @@
 #define LCD_D6                   47
 #define LCD_D7                   48
 
-#define PIN_POWER_ON                 15
+#define POWER_ON                 15
 
 #define LCD_RES                  5
 #define LCD_CS                   6

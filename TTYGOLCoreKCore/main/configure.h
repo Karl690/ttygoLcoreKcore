@@ -2,6 +2,10 @@
 #pragma once
 #include <stdint.h>
 
+#define USE_UI
+//#define ESP32_SC01
+#define ESP32_TTYGO
+
 #define SDCARD_MOUNT_POINT "/sd-card"
 #define SYSTEM_CONFIG_FILE SDCARD_MOUNT_POINT"/config.ini"
 #define AMPLIIFER_CSV_FILE SDCARD_MOUNT_POINT"/amplifier.csv"
@@ -11,10 +15,15 @@
 #define TX_BUF_SIZE  0x3ff
 #define RX_URGENT_BUF_SIZE 0x3ff	//1k
 
-
+#ifdef ESP32_SC01
 #define SCREEN_WIDTH	480
 #define SCREEN_HEIGHT	320
+#endif
 
+#ifdef ESP32_TTYGO
+#define SCREEN_WIDTH				170
+#define SCREEN_HEIGHT				320
+#endif
 typedef struct
 {
 	uint8_t ssid[32];

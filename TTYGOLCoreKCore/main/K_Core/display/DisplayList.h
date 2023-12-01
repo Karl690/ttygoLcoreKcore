@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 typedef enum {
+	FUNC_TITLE,
 	FUNC_INT,
 	FUNC_INT16,
 	FUNC_INT32,
@@ -51,19 +52,19 @@ typedef struct {
 	uint32_t			Color_2; // this is for Value or progress bar in Bar.
 	uint32_t 		Offset; //for FUNC_MEMDUMPASCII if string is array variable(char a[]), it would be 1 otherwise 0. it is only for memory ascii function
 							//for FUNC_MEMDUMPHEX it means offset.	
-	uint8_t			Editable;  //enabled editing by user
-	uint8_t			ExposedOpc;  //expose this value to OPC
-	uint32_t		OpcNodeId; // Opc Node id,
 	void*		lv_object;
 } DisplayVariableInfo; //__attribute__((packed)) 
 
+typedef enum
+{
+	DISPLAY_VAR_SYSTEM,
+	DISPLAY_VAR_BLUETOOTH,
+	DISPLAY_VAR_ADC,
+	DISPLAY_VAR_LIST_SIZE
+}DISPLAY_VAR_TYPE;
 
-#define DISPLAYVARIABEINFO_SIZE sizeof(DisplayVariableInfo)
 
-#define NUMBER_OF_DISPLAY_LISTS 4
-
-extern DisplayVariableInfo LcdVarsTable[];
-extern DisplayVariableInfo Lcd1VarsTable[];
-extern DisplayVariableInfo Lcd2VarsTable[];
-extern DisplayVariableInfo Lcd3VarsTable[];
+extern DisplayVariableInfo GeneralVarsTable[];
+extern DisplayVariableInfo BluetoothVarsTable[];
+extern DisplayVariableInfo AdcVarsTable[];
 

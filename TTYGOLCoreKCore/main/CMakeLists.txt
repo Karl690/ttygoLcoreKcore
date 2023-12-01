@@ -5,10 +5,13 @@ idf_component_register(
                 	L_Core/server/server.c
                 	L_Core/server/parse.c
                 	L_Core/storage/partition.c
-                    L_Core/storage/nvs.c
+                	L_Core/storage/nvs.c
                 	L_Core/bluetooth/ble.c
                 	L_Core/bluetooth/ble-server.c
                 	L_Core/bluetooth/ble-client.c
+                	L_Core/devices/display_7789v.c
+                	L_Core/ui/ui.c
+                	L_Core/ui/ui-variables.c
                 	K_Core/K_Core.c
                 	K_Core/gpio/GPIO.c
                 	K_Core/taskmanager.c
@@ -19,7 +22,6 @@ idf_component_register(
                 	K_Core/serial/serial.c
                 	K_Core/adc/adc.c
                 	K_Core/adc/adc-table.c
-                	K_Core/display/DisplayCagetoryList.c
                 	K_Core/communication/communication.c
                 	K_Core/communication/parser.c
                 	K_Core/execution/bcode.c
@@ -27,7 +29,8 @@ idf_component_register(
                 	K_Core/tools/tools.c
                 INCLUDE_DIRS "."
                 REQUIRES
-                    nvs_flash
+                	lvgl
+                	nvs_flash
                 	app_update
                 	esp_https_ota
                 	esp_event
@@ -36,5 +39,8 @@ idf_component_register(
                 	esp_wifi
                 	esp_partition
                 	esp_hw_support
+                	esp_lcd
                 	bt
-                	fatfs)            
+                	fatfs
+                	heap
+                	driver)            

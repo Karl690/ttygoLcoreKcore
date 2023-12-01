@@ -3,12 +3,14 @@
 #include "taskmanager.h"
 #include "L_Core/bluetooth/ble.h"
 #include "K_Core/gpio/pinout.h"
+#include "K_Core/gpio/GPIO.h"
 #include "K_Core/adc/adc.h"
 #include "K_Core/serial/serial.h"
 #include "K_Core/communication/parser.h"
 #include "K_Core/communication/communication.h"
 #include "K_Core/tools/tools.h"
 #include "K_Core/execution/cmdprocessor.h"
+
 esp_timer_handle_t systickTimer;
 
 
@@ -49,7 +51,7 @@ const PFUNC F10HZ[NUM_10HZ] =
 	Spare,
 	Spare,
 	Spare,
-	Spare,
+	gpio_get_key_value,
 };
 
 const PFUNC F1HZ[NUM_1HZ] =
@@ -110,8 +112,8 @@ void Spare(void)
 void BlinkHeartBeat(void)
 {	
 	HeartBeat++;
-	if (HeartBeat & 0x1) gpio_set_level(LCD_BL, 1);
-	else gpio_set_level(LCD_BL, 0);
+	// if (HeartBeat & 0x1) gpio_set_level(LCD_BL, 1);
+	// else gpio_set_level(LCD_BL, 0);
 	//AddSerialStringToBuffer(&ComUart.TxBuffer, "a");
 	//AddSerialStringToBuffer(&Com485.TxBuffer, "b");
 }

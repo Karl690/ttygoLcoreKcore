@@ -158,7 +158,7 @@
     <DebugMethod>
       <ID>openocd</ID>
       <InterfaceID>esp_usb_jtag</InterfaceID>
-      <InterfaceSerialNumber>68:B6:B3:34:20:78</InterfaceSerialNumber>
+      <InterfaceSerialNumber>34:85:18:71:85:AC</InterfaceSerialNumber>
       <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp32">
         <CommandLine>-f interface/esp_usb_jtag.cfg -c "adapter_khz 3000" -f target/esp32s3.cfg</CommandLine>
         <ExtraParameters>
@@ -182,6 +182,7 @@
         <SelectedCoreIndex xsi:nil="true" />
         <LiveMemoryTimeout>5000</LiveMemoryTimeout>
         <SuggestionLogicRevision>1</SuggestionLogicRevision>
+        <FLASHResources />
         <CheckFLASHSize>true</CheckFLASHSize>
         <FLASHSettings>
           <Size>size2MB</Size>
@@ -192,7 +193,7 @@
       </Configuration>
     </DebugMethod>
     <AutoDetectRTOS>true</AutoDetectRTOS>
-    <SemihostingSupport>Auto</SemihostingSupport>
+    <SemihostingSupport>Enabled</SemihostingSupport>
     <SemihostingPollingDelay>0</SemihostingPollingDelay>
     <StepIntoEntryPoint>false</StepIntoEntryPoint>
     <ReloadFirmwareOnReset>false</ReloadFirmwareOnReset>

@@ -1,7 +1,7 @@
 #include "main.h"
 #include "ble.h"
 #ifdef USE_UI
-#include "../ui/ui-bluetooth.h"
+//#include "L_../ui/ui-bluetooth.h"
 #endif
 struct gattc_profile_inst {
 	esp_gattc_cb_t gattc_cb;
@@ -128,7 +128,7 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
 	    esp_ble_gattc_send_mtu_req(gattc_if, p_data->search_cmpl.conn_id);
 	    dev->is_connected = 1;
 #ifdef USE_UI	    
-	    ui_ble_set_device_status(dev);        
+	    //ui_ble_set_device_status(dev);        
 #endif	    
         break;    
     case ESP_GATTC_CFG_MTU_EVT:
@@ -249,7 +249,7 @@ static void gattc_profile_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_
         dev->get_server = 0;
         ESP_LOGI(BLE_TAG, "ESP_GATTC_DISCONNECT_EVT, reason = %d", p_data->disconnect.reason);
 #ifdef USE_UI	    
-        ui_ble_set_device_status(dev);
+        // ui_ble_set_device_status(dev);
 #endif	    
         break;
     default:
@@ -309,7 +309,7 @@ void ble_client_read_data(BleRemoteDevice* dev, uint8_t* data, uint16_t len)
     memcpy(dev->receive_buffer, data, len);
 	dev->total_received += len;
 #ifdef USE_UI	
-	ui_ble_set_received_data(dev);
+	//ui_ble_set_received_data(dev);
 #endif	
 }
 
