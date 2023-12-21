@@ -2,6 +2,7 @@
 #include "RevisionHistory.h"
 #include "L_Core/bluetooth/ble.h"
 #include "K_Core/execution/cmdprocessor.h"
+#include "K_Core/sps30/sps30.h"
 uint32_t ProcessingError = 0;
 uint32_t parser_parsed_line_counter = 0;
 uint32_t parser_gcodeLineNumber = 0;
@@ -24,7 +25,7 @@ void parser_rx_characters(ComBuffer* WorkBuff)
 				WorkBuff->ReadyForAtof = 1;
 				*WorkBuff->GCodeArgPtr++ = 0;
 				commentFlag = 0;
-				//MasterCommPort->AcksWaiting++;
+				MasterCommPort->AcksWaiting++;
 				return;
 			}
 			else 
@@ -41,8 +42,8 @@ void parser_rx_characters(ComBuffer* WorkBuff)
 		case CMD_END_CHAR:
 			WorkBuff->ReadyForAtof = 1;
 			commentFlag = 0;
-			//MasterCommPort->UrgentFlag = 0; 
-			//MasterCommPort->AcksWaiting++;
+			MasterCommPort->UrgentFlag = 0; 
+			MasterCommPort->AcksWaiting++;
 			return;
 			//this section is valid variable charcaters, that can be converted by Atof(string) function
 		case '1': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null

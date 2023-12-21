@@ -100,7 +100,7 @@ typedef struct _tagBLEDevice {
 }BleRemoteDevice;
 
 
-extern BleDevice bleServerDevice;
+extern COMPORT bleDevice;
 extern ble_server_status_t ble_server_status;
 extern uint8_t ble_client_scaned_device_num;
 extern BleRemoteDevice ble_client_remote_device[BLE_CLIENT_MAX_CONNECT_NUM];
@@ -148,4 +148,5 @@ BleRemoteDevice* ble_get_device(uint8_t id);
 BleRemoteDevice* ble_client_get_device_by_address(uint8_t* address);
 BleRemoteDevice* ble_client_get_device_by_conn_id(uint16_t);
 void ble_client_write_data(BleRemoteDevice* dev, uint8_t* data, uint16_t len);
+void ble_client_write_data_all(uint8_t* data, uint16_t len);
 void ble_client_read_data(BleRemoteDevice* dev, uint8_t* data, uint16_t len);

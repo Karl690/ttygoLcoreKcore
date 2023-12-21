@@ -1,11 +1,11 @@
 #pragma once
 
-#define SYSTEMINFO "ESP32SC01-PLUS"
-#define RevisionHeader ">Hy:L_Core:"
-#define MajorStep      "1.030"
-#define RevisionDate   "12/30/2023"
+#define SYSTEMINFO "ESP32-TTYGO"
+#define RevisionHeader ">Hy:TTYGOLCoreKCore:"
+#define MajorStep      "1.031"
+#define RevisionDate   "12/21/2023"
 #define SYSTEMVERSION  MajorStep " " RevisionDate
-#define CONNECTIONSTRING ">Hy:L_Core Rev " MajorStep ":" RevisionDate ":ESP32SC01 Plus:---:\n"   //"1.000:0:0:0:USB"
+#define CONNECTIONSTRING RevisionHeader " Rev " MajorStep ":" RevisionDate ":" SYSTEMINFO ":---:\n"   //"1.000:0:0:0:USB"
 
 /* 
 1.030 11/30/2023

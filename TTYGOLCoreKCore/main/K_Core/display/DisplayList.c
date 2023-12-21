@@ -1,11 +1,12 @@
 #include "DisplayList.h"
-#include "K_Core/taskmanager.h"
-#include "K_Core/K_Core.h"
 #include "L_Core/open62541/opc.h"
 #include "L_Core/wifi/wifi.h"
 #include "L_Core/bluetooth/ble.h"
 #include "K_Core/adc/adc.h"
 #include "K_Core/gpio/GPIO.h"
+#include "K_Core/taskmanager.h"
+#include "K_Core/K_Core.h"
+#include "K_Core/tools/tools.h"
 #include "RevisionHistory.h"
 #include "L_Core/ui/ui-variables.h"
 const char *BLE_STATUS[4] = { "Listening", "Paired", "Connected", "Headset" };
@@ -20,6 +21,7 @@ DisplayVariableInfo GeneralVarsTable[] = {
 
 DisplayVariableInfo BluetoothVarsTable[] = {
 	{ (void*)1, "BLUETOOTH", FUNC_TITLE, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &toolInfo.Address, "Address", FUNC_INT, COLOR_WHITE, COLOR_GREEN, 0, NULL },
 	{ &ble_server_status, "STATUS", FUNC_BAR_STATUS, COLOR_WHITE, COLOR_GREEN, (uint32_t)(void*)BLE_STATUS, NULL },
 	{ &ble_server_total_sent, "XMT#", FUNC_INT, COLOR_WHITE, COLOR_GREEN, 0, NULL },
 	{ &ble_server_status, "REV#", FUNC_INT, COLOR_WHITE, COLOR_RED, 0, NULL },

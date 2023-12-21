@@ -10,6 +10,7 @@
 #include "K_Core/communication/communication.h"
 #include "K_Core/tools/tools.h"
 #include "K_Core/execution/cmdprocessor.h"
+#include "K_Core/execution/sequence.h"
 
 esp_timer_handle_t systickTimer;
 
@@ -21,11 +22,11 @@ const PFUNC F1000HZ[NUM_1000HZ] =
 {
 	Spare,
 	// keep as last call in this array
-	communication_check_tx,
+	comm_check_tx,
 	Spare,
-	parser_incomming_ble_process,
-	parser_incomming_serial_process,
-	cmd_ble_sequener,
+	parser_incomming_into_gcodes,
+	Spare,
+	seq_sequence,
 	Spare,
 	Spare,
 };
@@ -120,6 +121,7 @@ void BlinkHeartBeat(void)
 
 void CheckBluetoothConnection(void)
 {
+	return;
 	if (ble_server_pairing_countdown > 0 && ble_server_status == BLE_SERVER_PAIRED)
 	{
 		// if keep the pairing status, close the connection.

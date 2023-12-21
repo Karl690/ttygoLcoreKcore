@@ -69,6 +69,13 @@ typedef enum {
 	COMTYPE_CUSTOM = 3
 } ComPortType;
 
+typedef enum
+{
+	COMM_TYPE_UART0,
+	COMM_TYPE_UART1,
+	COMM_TYPE_UART2,
+	COMM_TYPE_BLESERVER = 0xFF,
+}COMM_TYPE;
 
 typedef struct {
 	uint8_t*  	buffer; //receive buffer pointer
@@ -84,7 +91,7 @@ typedef struct {
 } ComBuffer;
 
 typedef struct {
-	int				uart_id; //esp32s3 support UART_0, 1, 2, 
+	COMM_TYPE		id; //esp32s3 support UART_0, 1, 2, 
 	ComBuffer       RxBuffer; //standard incoming receive buffer, circular
 	ComBuffer RxUrgentBuffer; //Priority Gocode rx buffer, bypasses big input que to execute in front of qued commands
 	ComBuffer       TxBuffer; //outgoing characters in que
@@ -92,36 +99,14 @@ typedef struct {
 	uint32_t     AcksWaiting; //acknowledge waiting to implement Handshake
 	ComPortType      ComType; // Main com, aux com, machine interface
 } COMPORT;
+//
+extern ComBuffer comm_raw_rx_combuffer;
+extern ComBuffer comm_raw_rx_urgent_combuffer;
 
 
-typedef struct {
-	uint8_t  	buffer[RX_BUF_SIZE]; //receive buffer pointer
-	uint16_t 	Head; // index of where to store the next char
-	uint16_t 	Tail; // index of where to pull the next char
-	uint16_t  	ReadyForAtof; //when we have encountered a full line "\n"  flip up the flag to convert to Float.
-	char command[CMD_MAX_SIZE]; //how many charcters the incoming argument is so far
-	char* commandPtr;
-} BleBuffer;
-
-
-typedef struct {
-	int				ble_id; //device id
-	BleBuffer       RxBuffer; //standard incoming receive buffer, circular
-	BleBuffer RxUrgentBuffer; //Priority Gocode rx buffer, bypasses big input que to execute in front of qued commands
-	BleBuffer       TxBuffer; //outgoing characters in que
-	uint32_t      UrgentFlag; //set when 911 character is received, signifying the beginning of a priority gcode line
-	uint32_t     AcksWaiting; //acknowledge waiting to implement Handshake	
-} BleDevice;
-
-void communication_buffers_serial_init(uint8_t UartIndex, COMPORT* ComPort, uint8_t* RxBuffer, uint8_t* RxUgrentBuffer, uint8_t* TxBuffer);
-void communication_buffers_ble_init(uint8_t id, BleDevice* device);
-void commnuication_process_rx_serial_characters(COMPORT* comport, uint8_t* buf, uint16_t len);
-void commnuication_process_rx_ble_characters(BleDevice* device, uint8_t* buf, uint16_t len);
-
-
-void commnuication_add_buffer_to_serial_buffer(ComBuffer *targetBuffer, uint8_t* buf, uint16_t len);
-void commnuication_add_string_to_serial_buffer(ComBuffer *targetBuffer, char* SourceString);
-
-void commnuication_add_buffer_to_ble_buffer(BleBuffer *targetBuffer, uint8_t* buf, uint16_t len);
-void commnuication_add_string_to_ble_buffer(BleBuffer *targetBuffer, char* SourceString);
-void communication_check_tx();
+void comm_init_buffers();
+void comm_init_buffer(COMPORT* CMPORT, uint8_t *rx_buffer, size_t rx_size, uint8_t *tx_buffer, size_t tx_size, uint8_t *rxUrgent_buffer, size_t rxUrgent_size);
+void comm_process_rx_characters(COMPORT* comport, uint8_t* buf, uint16_t len);
+void comm_add_buffer_to_buffer(ComBuffer *targetBuffer, uint8_t* buf, uint16_t len);
+void comm_add_string_to_buffer(ComBuffer *targetBuffer, char* SourceString);
+void comm_check_tx();

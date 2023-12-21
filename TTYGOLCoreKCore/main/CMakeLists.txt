@@ -19,12 +19,12 @@ idf_component_register(
                 	K_Core/K_Core.c
                 	K_Core/taskmanager.c
                 	K_Core/display/DisplayList.c
-                	K_Core/serial/serial.c
                 	K_Core/adc/adc.c
                 	K_Core/adc/adc-table.c
                 	K_Core/communication/communication.c
                 	K_Core/communication/parser.c
-                	K_Core/execution/bcode.c
+                	K_Core/execution/mcode.c
+                    K_Core/execution/sequence.c
                 	K_Core/execution/cmdprocessor.c
                 	K_Core/tools/tools.c
                 INCLUDE_DIRS "."

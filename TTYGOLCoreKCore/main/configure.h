@@ -11,9 +11,9 @@
 #define AMPLIIFER_CSV_FILE SDCARD_MOUNT_POINT"/amplifier.csv"
 
 #define CMD_MAX_SIZE 50
-#define RX_BUF_SIZE  0x7ff
-#define TX_BUF_SIZE  0x3ff
-#define RX_URGENT_BUF_SIZE 0x3ff	//1k
+#define RX_BUF_SIZE  0x800
+#define TX_BUF_SIZE  0x400
+#define RX_URGENT_BUF_SIZE 0x400	//1k
 
 #ifdef ESP32_SC01
 #define SCREEN_WIDTH	480

@@ -1,10 +1,7 @@
 #pragma once
 #include "main.h"
 #include "communication.h"
+#define UNPROCESSED -1 // used to init cmdLink on cmdQue CleanUpPointers ARG_N_PRESENT
 
-
-void parser_incomming_ble_process();
-void parser_incomming_serial_process();
-void parser_serial_data(COMPORT* comport, uint8_t urgent);
-void parser_ble_data(BleDevice* device, uint8_t urgent);
-void parser_parse_ble_data(char* data);
+void parser_reset_gcode_buffer(ComBuffer* BufferToReset);
+void parser_incomming_into_gcodes();

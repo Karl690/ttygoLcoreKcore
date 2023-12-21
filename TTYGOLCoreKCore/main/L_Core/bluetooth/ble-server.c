@@ -4,14 +4,14 @@
 #include "K_Core/communication/communication.h"
 #include "K_Core/tools/tools.h";
 #define ESP_SERVER_PROFILE_APP_IDX         0
-#define SAMPLE_DEVICE_NAME          "ESP32_S3_TTYGO"    //The Device Name Characteristics in GAP
+#define BLE_DEVICE_NAME          "HYREL_ESP32S3"    //The Device Name Characteristics in GAP
 #define SPP_SVC_INST_ID	            0
 
 
 uint8_t ble_server_rx_buffer[RX_BUF_SIZE];
 uint8_t ble_server_rx_urgent_buffer[RX_BUF_SIZE];
 uint8_t ble_server_tx_buffer[TX_BUF_SIZE];
-BleDevice bleServerDevice;
+COMPORT bleDevice;
 ble_server_status_t ble_server_status = BLE_SERVER_LISTENING;
 uint8_t ble_server_send_blink_count = 0;
 uint8_t ble_server_receive_blink_count = 0;
@@ -20,14 +20,26 @@ char ble_tmp[256] = { 0 };
 const uint16_t spp_service_uuid = SPP_SERVICE_UUID;
 /// Characteristic UUID
 
-static const uint8_t spp_adv_data[23] = {
+static const uint8_t spp_adv_data[22] = {
 	/* Flags */
 	0x02,0x01,0x06,
 	/* Complete List of 16-bit Service Class UUIDs */
 	0x03,0x03,0xF0,0xAB,
 	/* Complete Local Name in advertising */
-	0x0F,0x09,
-	'E', 'S', 'P', '3', '2', '_', 'S', '3', '_', 'T', 'T', 'Y', 'G','O'
+	0x0F, 0x09,
+	'H',
+	'Y',
+	'R',
+	'E',
+	'L',
+	'_',
+	'E',
+	'S',
+	'P',
+	'3',
+	'2',
+	'S',
+	'3'
 };
 
 static uint16_t spp_server_mtu_size = 23;
@@ -63,20 +75,12 @@ typedef struct spp_receive_data_node {
 	struct spp_receive_data_node * next_node;
 }spp_receive_data_node_t;
 
-static spp_receive_data_node_t * temp_spp_recv_data_node_p1 = NULL;
-static spp_receive_data_node_t * temp_spp_recv_data_node_p2 = NULL;
-
 typedef struct spp_receive_data_buff {
 	int32_t node_num;
 	int32_t buff_size;
 	spp_receive_data_node_t * first_node;
 }spp_receive_data_buff_t;
 
-static spp_receive_data_buff_t SppRecvDataBuff = {
-	.node_num = 0,
-	.buff_size = 0,
-	.first_node = NULL
-};
 
 static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 
@@ -84,7 +88,8 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 static struct gatts_profile_inst spp_profile_tab[BLE_SERVER_PROFILE_NUM] = {
 	[ESP_SERVER_PROFILE_APP_IDX] = {
 	.gatts_cb = gatts_profile_event_handler,
-	.gatts_if = ESP_GATT_IF_NONE, /* Not get the gatt_if, so initial is ESP_GATT_IF_NONE */
+	.gatts_if = ESP_GATT_IF_NONE,
+	/* Not get the gatt_if, so initial is ESP_GATT_IF_NONE */
 },
 };
 
@@ -128,86 +133,86 @@ static const esp_gatts_attr_db_t spp_gatt_db[SPP_IDX_NB] =
 {
 	//SPP -  Service Declaration
 	[SPP_IDX_SVC] = {
-	 { ESP_GATT_AUTO_RSP },
-	{
-	 ESP_UUID_LEN_16,
+	{ ESP_GATT_AUTO_RSP },
+{
+	ESP_UUID_LEN_16,
 	(uint8_t *)&primary_service_uuid,
 	ESP_GATT_PERM_READ,
 	sizeof(spp_service_uuid),
 	sizeof(spp_service_uuid),
 	(uint8_t *)&spp_service_uuid 
 }
- },
+},
 
 	//SPP -  data receive characteristic Declaration
 	[SPP_IDX_SPP_DATA_RECV_CHAR] = { 
 	{ ESP_GATT_AUTO_RSP },
-	{
-	 ESP_UUID_LEN_16,
+{
+	ESP_UUID_LEN_16,
 	(uint8_t *)&character_declaration_uuid,
 	ESP_GATT_PERM_READ,
 	CHAR_DECLARATION_SIZE, 
 	CHAR_DECLARATION_SIZE,
 	(uint8_t *)&char_prop_read_write
- }
- },
+}
+},
 
 	//SPP -  data receive characteristic Value
 	[SPP_IDX_SPP_DATA_RECV_VAL] = {
-	 { ESP_GATT_AUTO_RSP },
-	{
-	 ESP_UUID_LEN_16,
+	{ ESP_GATT_AUTO_RSP },
+{
+	ESP_UUID_LEN_16,
 	(uint8_t *)&spp_data_receive_uuid,
 	ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
 	SPP_DATA_MAX_LEN,
-	 sizeof(spp_data_receive_val),
+	sizeof(spp_data_receive_val),
 	(uint8_t *)spp_data_receive_val 
 } 
 },
 
 	//SPP -  data notify characteristic Declaration
 	[SPP_IDX_SPP_DATA_NOTIFY_CHAR] = {
-	 { ESP_GATT_AUTO_RSP },
-	{
-	 ESP_UUID_LEN_16,
+	{ ESP_GATT_AUTO_RSP },
+{
+	ESP_UUID_LEN_16,
 	(uint8_t *)&character_declaration_uuid,
 	ESP_GATT_PERM_READ,
 	CHAR_DECLARATION_SIZE, 
 	CHAR_DECLARATION_SIZE,
 	(uint8_t *)&char_prop_read_notify
- }
- },
+}
+},
 
 	//SPP -  data notify characteristic Value
 	[SPP_IDX_SPP_DATA_NTY_VAL] = {
-	 { ESP_GATT_AUTO_RSP },
-	{ 
+	{ ESP_GATT_AUTO_RSP },
+{ 
 	ESP_UUID_LEN_16,
 	(uint8_t *)&spp_data_notify_uuid,
 	ESP_GATT_PERM_READ,
 	SPP_DATA_MAX_LEN,
 	sizeof(spp_data_notify_val),
 	(uint8_t *)spp_data_notify_val
- }
- },
+}
+},
 
 	//SPP -  data notify characteristic - Client Characteristic Configuration Descriptor
 	[SPP_IDX_SPP_DATA_NTF_CFG] = { 
 	{ ESP_GATT_AUTO_RSP },
-	{
-	 ESP_UUID_LEN_16,
+{
+	ESP_UUID_LEN_16,
 	(uint8_t *)&character_client_config_uuid,
 	ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
 	sizeof(uint16_t), 
 	sizeof(spp_data_notify_ccc),
 	(uint8_t *)spp_data_notify_ccc
- } 
+} 
 },
 
 	//SPP -  command characteristic Declaration
 	[SPP_IDX_SPP_COMMAND_CHAR] = { 
 	{ ESP_GATT_AUTO_RSP },
-	{ 
+{ 
 	ESP_UUID_LEN_16,
 	(uint8_t *)&character_declaration_uuid,
 	ESP_GATT_PERM_READ,
@@ -219,55 +224,55 @@ static const esp_gatts_attr_db_t spp_gatt_db[SPP_IDX_NB] =
 
 	//SPP -  command characteristic Value
 	[SPP_IDX_SPP_COMMAND_VAL] = {
-	 { ESP_GATT_AUTO_RSP },
-	{ 
+	{ ESP_GATT_AUTO_RSP },
+{ 
 	ESP_UUID_LEN_16,
 	(uint8_t *)&spp_command_uuid,
 	ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
 	SPP_CMD_MAX_LEN,
-	 sizeof(spp_command_val),
+	sizeof(spp_command_val),
 	(uint8_t *)spp_command_val 
 } 
 },
 
 	//SPP -  status characteristic Declaration
 	[SPP_IDX_SPP_STATUS_CHAR] = {
-	 { ESP_GATT_AUTO_RSP },
-	{
-	 ESP_UUID_LEN_16,
+	{ ESP_GATT_AUTO_RSP },
+{
+	ESP_UUID_LEN_16,
 	(uint8_t *)&character_declaration_uuid,
 	ESP_GATT_PERM_READ,
 	CHAR_DECLARATION_SIZE, 
 	CHAR_DECLARATION_SIZE,
 	(uint8_t *)&char_prop_read_notify 
 }
- },
+},
 
 	//SPP -  status characteristic Value
 	[SPP_IDX_SPP_STATUS_VAL] = { 
 	{ ESP_GATT_AUTO_RSP },
-	{ 
+{ 
 	ESP_UUID_LEN_16,
 	(uint8_t *)&spp_status_uuid,
 	ESP_GATT_PERM_READ,
 	SPP_STATUS_MAX_LEN,
-	 sizeof(spp_status_val),
+	sizeof(spp_status_val),
 	(uint8_t *)spp_status_val 
 } 
 },
 
 	//SPP -  status characteristic - Client Characteristic Configuration Descriptor
 	[SPP_IDX_SPP_STATUS_CFG] = {
-	 { ESP_GATT_AUTO_RSP },
-	{
-	 ESP_UUID_LEN_16,
+	{ ESP_GATT_AUTO_RSP },
+{
+	ESP_UUID_LEN_16,
 	(uint8_t *)&character_client_config_uuid,
 	ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
 	sizeof(uint16_t), 
 	sizeof(spp_status_ccc),
 	(uint8_t *)spp_status_ccc
- }
- },
+}
+},
 };
 
 static uint8_t find_char_and_desr_index(uint16_t handle)
@@ -294,7 +299,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 	switch (event) {
 	case ESP_GATTS_REG_EVT:
 		ESP_LOGI(BLE_TAG, "%s %d\n", __func__, __LINE__);
-		esp_ble_gap_set_device_name(SAMPLE_DEVICE_NAME);
+		esp_ble_gap_set_device_name(BLE_DEVICE_NAME);
 
 		ESP_LOGI(BLE_TAG, "%s %d\n", __func__, __LINE__);
 		esp_ble_gap_config_adv_data_raw((uint8_t *)spp_adv_data, sizeof(spp_adv_data));
@@ -309,46 +314,46 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 		}
 		break;
 	case ESP_GATTS_WRITE_EVT: {
-		res = find_char_and_desr_index(p_data->write.handle);
-		if (p_data->write.is_prep == false) {
-			ESP_LOGI(BLE_TAG, "ESP_GATTS_WRITE_EVT : handle = %d\n", res);
-			if (res == SPP_IDX_SPP_COMMAND_VAL) {
-				uint8_t * spp_cmd_buff = NULL;
-				spp_cmd_buff = (uint8_t *)malloc((spp_server_mtu_size - 3) * sizeof(uint8_t));
-				if (spp_cmd_buff == NULL) {
-					ESP_LOGE(BLE_TAG, "%s malloc failed\n", __func__);
-					break;
+			res = find_char_and_desr_index(p_data->write.handle);
+			if (p_data->write.is_prep == false) {
+				ESP_LOGI(BLE_TAG, "ESP_GATTS_WRITE_EVT : handle = %d\n", res);
+				if (res == SPP_IDX_SPP_COMMAND_VAL) {
+					uint8_t * spp_cmd_buff = NULL;
+					spp_cmd_buff = (uint8_t *)malloc((spp_server_mtu_size - 3) * sizeof(uint8_t));
+					if (spp_cmd_buff == NULL) {
+						ESP_LOGE(BLE_TAG, "%s malloc failed\n", __func__);
+						break;
+					}
+					memset(spp_cmd_buff, 0x0, (spp_server_mtu_size - 3));
+					memcpy(spp_cmd_buff, p_data->write.value, p_data->write.len);
+					//xQueueSend(cmd_cmd_queue, &spp_cmd_buff, 10 / portTICK_PERIOD_MS);
 				}
-				memset(spp_cmd_buff, 0x0, (spp_server_mtu_size - 3));
-				memcpy(spp_cmd_buff, p_data->write.value, p_data->write.len);
-				//xQueueSend(cmd_cmd_queue, &spp_cmd_buff, 10 / portTICK_PERIOD_MS);
-			}
-			else if (res == SPP_IDX_SPP_DATA_NTF_CFG) {
-				if ((p_data->write.len == 2)&&(p_data->write.value[0] == 0x01)&&(p_data->write.value[1] == 0x00)) {
-					enable_data_ntf = true;
+				else if (res == SPP_IDX_SPP_DATA_NTF_CFG) {
+					if ((p_data->write.len == 2)&&(p_data->write.value[0] == 0x01)&&(p_data->write.value[1] == 0x00)) {
+						enable_data_ntf = true;
+					}
+					else if ((p_data->write.len == 2)&&(p_data->write.value[0] == 0x00)&&(p_data->write.value[1] == 0x00)) {
+						enable_data_ntf = false;
+					}
 				}
-				else if ((p_data->write.len == 2)&&(p_data->write.value[0] == 0x00)&&(p_data->write.value[1] == 0x00)) {
-					enable_data_ntf = false;
-				}
-			}
-			else if (res == SPP_IDX_SPP_DATA_RECV_VAL) {
-				ble_server_received_data(p_data->write.value, p_data->write.len);
-				if (p_data->write.len >= 20) strncpy(ble_last_received_data, (char*)p_data->write.value, 20);
-				else strcpy(ble_last_received_data, (char*)p_data->write.value);				
+				else if (res == SPP_IDX_SPP_DATA_RECV_VAL) {
+					ble_server_received_data(p_data->write.value, p_data->write.len);
+					if (p_data->write.len >= 20) strncpy(ble_last_received_data, (char*)p_data->write.value, 20);
+					else strcpy(ble_last_received_data, (char*)p_data->write.value);				
 					
+				}
+				else {
+					//TODO:
+				}
 			}
-			else {
-				//TODO:
+			else if ((p_data->write.is_prep == true)&&(res == SPP_IDX_SPP_DATA_RECV_VAL)) {
+				ESP_LOGI(BLE_TAG, "ESP_GATTS_PREP_WRITE_EVT : handle = %d\n", res);
+				//store_wr_buffer(p_data);
 			}
+			break;
 		}
-		else if ((p_data->write.is_prep == true)&&(res == SPP_IDX_SPP_DATA_RECV_VAL)) {
-			ESP_LOGI(BLE_TAG, "ESP_GATTS_PREP_WRITE_EVT : handle = %d\n", res);
-			//store_wr_buffer(p_data);
-		}
-		break;
-	}
 	case ESP_GATTS_EXEC_WRITE_EVT: {
-		ESP_LOGI(BLE_TAG, "ESP_GATTS_EXEC_WRITE_EVT\n");
+			ESP_LOGI(BLE_TAG, "ESP_GATTS_EXEC_WRITE_EVT\n");
 			if (p_data->exec_write.exec_write_flag) {
 				//print_write_buffer();
 				//free_write_buffer();
@@ -395,7 +400,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 	case ESP_GATTS_CONGEST_EVT:
 		break;
 	case ESP_GATTS_CREAT_ATTR_TAB_EVT: {
-		ESP_LOGI(BLE_TAG, "The number handle =%x\n", param->add_attr_tab.num_handle);
+			ESP_LOGI(BLE_TAG, "The number handle =%x\n", param->add_attr_tab.num_handle);
 			if (param->add_attr_tab.status != ESP_GATT_OK) {
 				ESP_LOGE(BLE_TAG, "Create attribute table failed, error code=0x%x", param->add_attr_tab.status);
 			}
@@ -451,7 +456,8 @@ uint8_t ble_server_enable()
 	systemconfig.bluetooth.server_enabled = 1;
 	ble_server_total_received = 0;
 	// initialize the buffer(Rx, Tx, Urgent Rx)
-	communication_buffers_ble_init(BLE_PORT_ID, &bleServerDevice);
+	bleDevice.id = COMM_TYPE_BLESERVER;
+	comm_init_buffer(&bleDevice, ble_server_rx_buffer, RX_BUF_SIZE, ble_server_tx_buffer, TX_BUF_SIZE, NULL, 0);
 	return 1;
 }
 
@@ -485,6 +491,7 @@ void ble_server_received_data(uint8_t* data, uint16_t size)
 {
 	ble_server_receive_blink_count = 5;
 	ble_server_total_received += size;
-	commnuication_process_rx_ble_characters(&bleServerDevice, data, size);	
+	//comm_process_rx_characters(&bleDevice, data, size);	
+	comm_process_rx_characters(&bleDevice, data, size);
 }
 //////////////////////////////////////////////////////////////////////////////
