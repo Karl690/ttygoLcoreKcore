@@ -14,7 +14,7 @@ void tools_init()
 {
 	//storage_partition_read(STORAGE_ADDRESS_TOOLINFO, (uint8_t*)&toolInfo, sizeof(ToolInfo));
 	storage_nvs_get_blob(NVS_KEY_TOOLINFO, &toolInfo);
-	if (toolInfo.Address >= 99) toolInfo.Address = 99;
+	if (toolInfo.Address < HH_POSITION_DEFUALT_BLE) toolInfo.Address = HH_POSITION_DEFUALT_BLE;
 #ifdef USE_UI
 	// ui_ble_set_headindex(toolInfo.Address);
 #endif
@@ -44,3 +44,14 @@ void tools_report_unregister()
 	comm_add_string_to_buffer(&bleDevice.TxBuffer, tempstring);
 }
 
+int tool_rand_range(uint16_t min, uint16_t max)
+{
+	return rand() % (max + 1 - min) + min;
+}
+void tool_random_test()
+{
+	toolInfo.ActualAux = tool_rand_range(1, 10);
+	toolInfo.ActualTemperature = tool_rand_range(20, 80);
+	toolInfo.ActualFanDutyCycle = tool_rand_range(1, 100);
+	toolInfo.ActualHeaterDutyCycle = tool_rand_range(40, 100);
+}

@@ -2,8 +2,8 @@
 
 #define SYSTEMINFO "ESP32-TTYGO"
 #define RevisionHeader ">Hy:TTYGOLCoreKCore:"
-#define MajorStep      "1.031"
-#define RevisionDate   "12/21/2023"
+#define MajorStep      "1.032"
+#define RevisionDate   "12/28/2023"
 #define SYSTEMVERSION  MajorStep " " RevisionDate
 #define CONNECTIONSTRING RevisionHeader " Rev " MajorStep ":" RevisionDate ":" SYSTEMINFO ":---:\n"   //"1.000:0:0:0:USB"
 

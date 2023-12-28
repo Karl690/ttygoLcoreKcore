@@ -1,5 +1,7 @@
 #include "main.h"
 
+#define HH_POSITION_UNPLUGGED           0xFE	//254
+#define HH_POSITION_DEFUALT_BLE			0x66
 typedef struct {
 	float               PulsesPerUnit; //number of pulses per microliter or mm, used to calculate actual flow rate in pulses per second
 	float               NozzleDiameter; // check your slicer, but this is usually close to the nozzle hole diameter
@@ -30,6 +32,7 @@ typedef struct {
 	uint16_t ActualFanDutyCycle;
 	uint16_t DesiredFanDutyCycle;
 	uint16_t ActualAux;
+	uint32_t VelocityFactor;
 	ToolExtrusionControlStruct ExtrusionControl;
 }ToolInfo;
 
@@ -38,3 +41,4 @@ void tools_init();
 void tools_report_information();
 void tools_report_register();
 void tools_report_unregister();
+void tool_random_test();

@@ -17,6 +17,7 @@ const char *TAG = "L_Core";
 bool IsInitialized = false;
 SYSTEMCONFIG systemconfig;
 
+uint8_t SoapString[SOAP_STRING_SIZE] = { 0 };
 void app_main(void)
 {
 	// Initialize NVS
@@ -62,4 +63,15 @@ bool save_configuration()
 	systemconfig.initialized = 1;
 	return storage_nvs_set_blob(NVS_KEY_CONFIG, &systemconfig, sizeof(SYSTEMCONFIG));
 	//return storage_partition_write(STORAGE_ADDRESS_SETTINGS, &systemconfig, sizeof(SYSTEMCONFIG));
+}
+
+
+bool load_soapstring()
+{
+	if (!storage_nvs_get_blob(NVS_KEY_SOAPSTRING, SoapString)) return false;
+	return true;
+}
+bool save_soapstring()
+{
+	return storage_nvs_set_blob(NVS_KEY_SOAPSTRING, SoapString, SOAP_STRING_SIZE);
 }

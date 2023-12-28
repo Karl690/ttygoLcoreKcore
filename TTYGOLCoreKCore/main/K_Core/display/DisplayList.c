@@ -16,6 +16,15 @@ DisplayVariableInfo GeneralVarsTable[] = {
 	{ &RevisionDate, "Build", FUNC_ASCII, COLOR_WHITE, COLOR_WHITE, 0, NULL },
 	{ &HeartBeat, "HB      ", FUNC_INT32, COLOR_WHITE, COLOR_GREEN, 0, NULL },
 	{ &gpio_key_status, "KEY", FUNC_BOOLEAN, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ (void*)1, "TOOL INFO", FUNC_TITLE, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &toolInfo.Address, "Address", FUNC_HEX16, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &toolInfo.ActualTemperature, "A Temp", FUNC_INT16, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &toolInfo.ActualFanDutyCycle, "A Fan", FUNC_INT16, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &toolInfo.ActualHeaterDutyCycle, "A Heater", FUNC_INT16, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &toolInfo.ActualAux, "A Aux", FUNC_INT16, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &toolInfo.DesiredTemperature, "D Temp", FUNC_INT16, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &toolInfo.DesiredFanDutyCycle, "A Fan", FUNC_INT16, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &toolInfo.DesiredHeaterDutyCycle, "A Heater", FUNC_INT16, COLOR_WHITE, COLOR_GREEN, 0, NULL },	
 	{ 0 },
 };
 

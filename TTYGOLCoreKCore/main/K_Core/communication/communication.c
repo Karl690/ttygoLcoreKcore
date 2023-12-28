@@ -94,7 +94,7 @@ void comm_add_char_to_buffer(ComBuffer *targetBuffer, uint8_t RawChar)
 }
 
 
-
+//we should not use this anymore.
 void comm_process_rx_characters(COMPORT* comport, uint8_t* buf, uint16_t len)
 {
 	ComBuffer* WorkBuf = comport->UrgentFlag ? &comm_raw_rx_urgent_combuffer : &comm_raw_rx_combuffer; //point to the correct buffer
@@ -181,23 +181,111 @@ void comm_process_rx_characters(COMPORT* comport, uint8_t* buf, uint16_t len)
 	}	
 }
 
+void comm_process_rx(COMPORT* comport)
+{
+	ComBuffer* WorkBuf = comport->UrgentFlag ? &comm_raw_rx_urgent_combuffer : &comm_raw_rx_combuffer; //point to the correct buffer
+	
+	int index = 0;
+	uint8_t WorkRxChar;
+	
+	while (comport->RxBuffer.Head != comport->RxBuffer.Tail)	
+	{	
+		WorkRxChar = comport->RxBuffer.buffer[comport->RxBuffer.Tail];
+		comport->RxBuffer.Tail++;
+		comport->RxBuffer.Tail &= (comport->RxBuffer.Buffer_Size - 1);
+		if (WorkRxChar  > 0x19)
+		{
+			//normal ascii character processing, below 20 hex are special control characters
+			comm_add_char_to_buffer(WorkBuf, WorkRxChar);
+		}
+		//if you get here, you must process special characters
+		else
+		{			
+			switch (WorkRxChar)
+			{
+			case   0:                                       break; //null end of the string
+			case TERMINATE_WAIT_CHAR:   		//if (rawChar==1)
+				// Process_TERMINATE_WAIT_CHAR(); 
+				break;
+
+			case PAUSE_AT_END_OF_MOVE_CHAR:     //if (rawChar==2)
+				//requestToPauseAtEndOfMove = 1; 
+				break;//set flag to stop at end of this move
+
+			case PAUSE_AT_END_OF_LAYER_CHAR:     //if (rawChar==3)
+				//requestToPauseAtEndOfLayer = 1; 
+				break; //(when M790 is executed set flag to stop at end of this layer
+
+			case AVAILABLE_4:	break; //if (rawChar==4)
+
+			case SEND_STATUS_CHAR:    break; //if (rawChar==5)
+				//M_Code_M775();break;// send live status on health of motion controller
+
+			case ASCII_ACK: //if (rawChar==6)
+				//ShowNextDisplay(); break;
+
+			case PING_CHAR:     //if (rawChar==7)
+				//comm_add_string_to_buffer(&MasterCommPort->TxBuffer, (char*)CONNECTIONSTRING);
+				break;
+
+			case ABORT_CHAR:  
+				//				MotorX.PULSES_TO_GO = 0;
+				//				MotorY.PULSES_TO_GO = 0;
+				//				MotorZ.PULSES_TO_GO = 0;
+								//requestToAbortAtEndOfMove = 1; break;  //if (rawChar==8)
+									//this is a job abort, flush buffer NOW!!!!
+
+			case URGENT_911_CMD_CHAR:     //if (rawChar==9)
+				comport->UrgentFlag = 1; //tell them this is a hot inject command line
+				break;
+			case CR_CHAR:
+			case CMD_END_CHAR:  //if (rawChar==10) 0xA or 0xD  can trigger the end of line			
+				//gcodeCmdsReceived++;
+				comm_add_char_to_buffer(WorkBuf, WorkRxChar);
+				comport->UrgentFlag = 0; return;
+			
+				
+			case JOG_Z_TABLE_UP:    
+				//JogMotorZFlag = 1; break;   //if (rawChar==11)
+
+			case JOG_Z_TABLE_DOWN:  
+				//JogMotorZFlag = -1; break;   //if (rawChar==12)
+
+			case REPETREL_COMM_WATCHDOG_CHAR:   // (rawChar==14)
+				//_repetrelCommWatchCount = REPETREL_COMM_WATCHDOG_START_VALUE;
+				break;
+
+			case JOG_DISPLAYplus: 
+				//ShowNextDisplay(); 
+				break;											// (rawChar==15)
+			case JOG_DISPLAYminus:	
+				//ShowPreviousDisplay(); 
+				break;
+			case VARIABLE_RESET:   
+				// ClearSliceTimes(); ResetParseCounters(); 
+				break;				//if (rawChar==17)
+			}
+		}
+		index++; //increment to next INCOMING character position
+	}	
+}
 void comm_process_tx(COMPORT* comport)
 {
 	uint8_t workcharacter;
 	uint16_t numberOfXmitCharactersToSend = 0;
 	if ((comport->TxBuffer.Head != comport->TxBuffer.Tail) || comport->AcksWaiting)
 	{	
-		while (comport->AcksWaiting)
-		{
-			comm_add_char_to_buffer(&comport->TxBuffer, ASCII_ACK);
-			comport->AcksWaiting--;
-		}
+//		while (comport->AcksWaiting)
+//		{
+//			comm_add_char_to_buffer(&comport->TxBuffer, ASCII_ACK);
+//			comport->AcksWaiting--;
+//		}
 		while (comport->TxBuffer.Head != comport->TxBuffer.Tail)
 		{ 
 			workcharacter = comport->TxBuffer.buffer[comport->TxBuffer.Tail];
 			if (comport->id == COMM_TYPE_BLESERVER)
 				comm_buffer[numberOfXmitCharactersToSend] = workcharacter;
-			// else
+			//else
 			//	serial_uart_write_byte(comport->id, workcharacter);
 			comport->TxBuffer.Tail++;
 			comport->TxBuffer.Tail &= (comport->TxBuffer.Buffer_Size - 1);
@@ -206,15 +294,40 @@ void comm_process_tx(COMPORT* comport)
 			if (numberOfXmitCharactersToSend > CMD_MAX_SIZE) break;//limit the transmission packet size
 		}
 		if (numberOfXmitCharactersToSend > 0 && comport->id == COMM_TYPE_BLESERVER) {
+			//ble_client_write_data_all(comm_buffer, numberOfXmitCharactersToSend);
 			ble_server_send_data(comm_buffer, numberOfXmitCharactersToSend);
 		}
 		return;//only process 1 message per tick
 	}
 }
+int comm_process_rx_index = 0;
+int comm_process_tx_index = 0;
+void comm_check_rx()
+{
+	comm_process_rx(&bleDevice);
+	/*
+	switch (comm_process_rx_index)
+	{
+	case 0:comm_process_rx(&bleDevice); break;
+	case 1:comm_process_rx(&ComUart1); break;
+	case 2:comm_process_rx(&ComUart2); break;
+	}
+	comm_process_rx_index++;
+	comm_process_rx_index &= 0x3;
+	*/
+}
 
 void comm_check_tx()
 {
-	comm_process_tx(&bleDevice);	
-	//comm_process_tx(&ComUart1);
-	//comm_process_tx(&ComUart2);
+	comm_process_tx(&bleDevice);
+	/*
+	switch (comm_process_tx_index)
+	{
+	case 0:comm_process_tx(&bleDevice); break;
+	case 1:comm_process_tx(&ComUart1); break;
+	case 2:comm_process_tx(&ComUart2); break;
+	}
+	comm_process_tx_index++;
+	comm_process_tx_index &= 0x3;
+	*/
 }

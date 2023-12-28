@@ -25,7 +25,7 @@ idf_component_register(
                 	K_Core/communication/parser.c
                 	K_Core/execution/mcode.c
                     K_Core/execution/sequence.c
-                	K_Core/execution/cmdprocessor.c
+                    K_Core/execution/can.c
                 	K_Core/tools/tools.c
                 INCLUDE_DIRS "."
                 REQUIRES

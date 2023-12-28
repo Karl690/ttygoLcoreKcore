@@ -2,7 +2,7 @@
 #include "ble.h"
 #include "driver/uart.h"
 #include "K_Core/communication/communication.h"
-#include "K_Core/tools/tools.h";
+#include "K_Core/tools/tools.h"
 #define ESP_SERVER_PROFILE_APP_IDX         0
 #define BLE_DEVICE_NAME          "HYREL_ESP32S3"    //The Device Name Characteristics in GAP
 #define SPP_SVC_INST_ID	            0
@@ -491,7 +491,7 @@ void ble_server_received_data(uint8_t* data, uint16_t size)
 {
 	ble_server_receive_blink_count = 5;
 	ble_server_total_received += size;
-	//comm_process_rx_characters(&bleDevice, data, size);	
-	comm_process_rx_characters(&bleDevice, data, size);
+	comm_add_buffer_to_buffer(&bleDevice.RxBuffer, data, size);
+	
 }
 //////////////////////////////////////////////////////////////////////////////

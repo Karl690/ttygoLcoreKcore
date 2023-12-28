@@ -14,6 +14,7 @@
 #define RX_BUF_SIZE  0x800
 #define TX_BUF_SIZE  0x400
 #define RX_URGENT_BUF_SIZE 0x400	//1k
+#define SOAP_STRING_SIZE 0x400
 
 #ifdef ESP32_SC01
 #define SCREEN_WIDTH	480

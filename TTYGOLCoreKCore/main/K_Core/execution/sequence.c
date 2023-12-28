@@ -1,11 +1,34 @@
 
 #include "sequence.h"
-#include "cmdprocessor.h"
 #include "K_Core/communication/parser.h"
 #include "mcode.h"
+#include "can.h"
 
-int seq_current_command_pointer = 1;
-int seq_next_command_pointer  = 1;
+
+void seq_sequence()
+{
+	if (parser_cmd_que_head == parser_cmd_que_tail) return;
+	SimpleCommand* workedCommand = &parser_cmd_que[parser_cmd_que_tail];
+	switch (workedCommand->type)
+	{
+		
+	case CMD_CAN:
+		can_process_message(workedCommand);
+		break;
+	case CMD_GCODE:
+		//mcode_process_message(workedCommand);
+		break;
+	case CMD_SPS30:
+		//sps30_process_message(workedCommand);
+		break;
+	}
+	
+	parser_cmd_que_tail++;
+	parser_cmd_que_tail &= (SIZE_OF_COMMAND_QUEUE - 1);
+}
+
+/*
+
 void seq_sequence()
 {
 	if (!cmd_commands_in_que) return;
@@ -30,3 +53,4 @@ void seq_sequence()
 //	seq_current_command_pointer++;
 //	if (seq_current_command_pointer >= SIZE_OF_COMMAND_QUEUE) seq_current_command_pointer = 1;
 }
+*/

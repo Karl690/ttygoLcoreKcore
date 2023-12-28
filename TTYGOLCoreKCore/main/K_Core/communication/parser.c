@@ -1,125 +1,92 @@
 #include "parser.h"
 #include "RevisionHistory.h"
 #include "L_Core/bluetooth/ble.h"
-#include "K_Core/execution/cmdprocessor.h"
-uint32_t ProcessingError = 0;
-uint32_t parser_parsed_line_counter = 0;
-uint32_t parser_gcodeLineNumber = 0;
+
+uint16_t parser_cmd_que_head = 0;
+uint16_t parser_cmd_que_tail = 0;
+uint16_t parser_cmd_rx_length = 0;
+
+SimpleCommand parser_cmd_que[SIZE_OF_COMMAND_QUEUE];
 
 void parser_rx_characters(ComBuffer* WorkBuff)
 {
 	uint8_t RawRxChar;
-	uint8_t commentFlag = 0;
 	while (WorkBuff->Head != WorkBuff->Tail)
 	{
 		RawRxChar = WorkBuff->buffer[WorkBuff->Tail]; //update the work character
+		parser_cmd_que[parser_cmd_que_head].cmd[parser_cmd_rx_length] = RawRxChar;
 		WorkBuff->Tail++;
 		WorkBuff->Tail &= (WorkBuff->Buffer_Size - 1);
-
-		if (commentFlag)		//in comment mode, we should plug into a comment buffer for large transfers
-		{
-			if (RawRxChar == CMD_END_CHAR || RawRxChar == CR_CHAR)
-			{
-				//purge till we see a cr, eol
-				WorkBuff->ReadyForAtof = 1;
-				*WorkBuff->GCodeArgPtr++ = 0;
-				commentFlag = 0;
-				//MasterCommPort->AcksWaiting++;
-				return;
-			}
-			else 
-			{
-				*WorkBuff->GCodeArgPtr ++= RawRxChar;
-				continue;
-			}
-			//continue;//dont process comments for now
-		}
-
+		
 		switch (RawRxChar)
 		{
+		case 0x7E: // for SPS30 
+			if (parser_cmd_rx_length == 0)
+			{
+				parser_cmd_que[parser_cmd_que_head].type = CMD_SPS30;		
+			}
+			else if (parser_cmd_rx_length > 0)
+			{
+				parser_cmd_que_head++;
+				parser_cmd_que[parser_cmd_que_head].length = parser_cmd_rx_length;				
+				parser_cmd_que_head &= (SIZE_OF_COMMAND_QUEUE - 1);
+			
+				parser_cmd_rx_length = 0;
+				return;
+			}
+			
+			break;
 		case CR_CHAR:
 		case CMD_END_CHAR:
-			WorkBuff->ReadyForAtof = 1;
-			commentFlag = 0;
-			//MasterCommPort->UrgentFlag = 0; 
-			//MasterCommPort->AcksWaiting++;
+			if (parser_cmd_rx_length < 3)
+			{
+				//this is the invalid command
+				parser_cmd_rx_length = 0;
+				return;
+			}
+			if (parser_cmd_que[parser_cmd_que_head].cmd[0] == 'C' 
+				&& parser_cmd_que[parser_cmd_que_head].cmd[1] == 'A' 
+				&& parser_cmd_que[parser_cmd_que_head].cmd[2] == 'N') 
+				parser_cmd_que[parser_cmd_que_head].type = CMD_CAN; //that is CAN message
+			else
+				parser_cmd_que[parser_cmd_que_head].type = CMD_GCODE; 
+			parser_cmd_que_head++;
+			parser_cmd_que[parser_cmd_que_head].length = parser_cmd_rx_length;
+			parser_cmd_que_head &= (SIZE_OF_COMMAND_QUEUE - 1);
+			
+			parser_cmd_rx_length = 0;
 			return;
-			//this section is valid variable charcaters, that can be converted by Atof(string) function
-		case '1': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null
-		case '2': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null
-		case '3': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null
-		case '4': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null
-		case '5': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null
-		case '6': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null
-		case '7': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null
-		case '8': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null
-		case '9': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null
-		case '0': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null
-		case '.': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null
-		case '-': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null
-		case '+': *WorkBuff->GCodeArgPtr = RawRxChar; WorkBuff->GCodeArgPtr++; *WorkBuff->GCodeArgPtr = 0; break;//load char, and set next as null
-		//end of valid variable characters
-		case ' ':   break;//*GCodeArgPtr=' ';GCodeArgPtr++;*GCodeArgPtr=0; break;//POINT TO THE NEXT POSITION PLEASE
-
-		//this is the beginning of the KEY characters in gcode
-		case 'A': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgA; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'B': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgB; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'C': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgC; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'D': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgD; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'E': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgE; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'F': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgF; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'G': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgG; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'H': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgH; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'I': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgI; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'J': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgJ; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'K': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgK; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'L': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgL; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'M': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgM; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'N': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgN; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'O': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgO; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'P': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgP; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'Q': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgQ; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'R': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgR; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'S': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgS; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'T': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgT; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'U': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgU; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'V': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgV; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'W': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgW; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'X': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgX; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'Y': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgY; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case 'Z': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgZ; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-			//
-
-		case '*': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgSplat; *WorkBuff->GCodeArgPtr ++= RawRxChar; WorkBuff->ArgumentLength = 0; return;
-		case '/':
-		case ';': WorkBuff->GCodeArgPtr = (char*)&WorkBuff->AsciiArgs.GCodeArgComment; commentFlag = 1; WorkBuff->ArgumentLength = 0; return;
-			//					commentFlag=1;*WorkBuff->GCodeArgPtr++=RawRxChar;WorkBuff->ArgumentLength=0; return;
 		}
-		WorkBuff->ArgumentLength++;
-		if (WorkBuff->ArgumentLength >= (!commentFlag ? MAX_CHARS_FOR_PARAMETER : COMMENT_STRING_LENGTH))  // -1 because need room for the NULL
+		
+		
+		parser_cmd_rx_length++;
+		if (parser_cmd_rx_length >= MAX_COMMAND_LEN)
 		{
-			ProcessingError = 1;
-			return;//just dont do anything yet
+			//it is over
+			parser_cmd_que_head++;
+			parser_cmd_que_head &= (SIZE_OF_COMMAND_QUEUE - 1);
+			parser_cmd_rx_length = 0;
 		}
 	}
 }
 
-void processArgs(char *WorkBuffer, float *OutPutVariable)
-{
-	if (*WorkBuffer == 0)return;//if first chacter is null, return
 
-	//WorkBuffer++;//MOVE OVER 1 CHAR SO WE CAN PROCESS THE NUMBER, NOT THE KEY LETTER
-	if (*WorkBuffer == 0)
+//this method will take the characters from the input buffer and parse them into
+//the ascii args buffers, in preperation for converting to Float
+//once a full line has been processed, a flag is set CommandReadyToProcessFlag=1;
+//this will signal that the line is complete and that is ok to convert to float
+//to prevent stepping on the
+void parser_incomming_into_gcodes()
+{	
+	if (comm_raw_rx_combuffer.Head != comm_raw_rx_combuffer.Tail)
 	{
-		// no value to convert
-		ProcessingError = 1;
-		*OutPutVariable = INVALID_ARG_VALUE; //set to invalid value so we will not accidentally take a zero as a position or temperature argument
+		parser_rx_characters(&comm_raw_rx_combuffer);
 		return;
 	}
-	WorkBuffer++; //point to second charcter please, the first is the key character
-	*OutPutVariable = (float) atof(WorkBuffer); //start with the second character in the string, because the first character is the argument header char, like M or G or X  etc.
 }
 
+
+//initialize the pointers so we put the parsed characters inthe right place
 void parser_reset_gcode_buffer(ComBuffer* BufferToReset)
 {
 	//this will reset the ascii input buffers by putting a null in the first character
@@ -153,125 +120,4 @@ void parser_reset_gcode_buffer(ComBuffer* BufferToReset)
 	BufferToReset->AsciiArgs.GCodeArgZ[0] = 0;
 	BufferToReset->AsciiArgs.GCodeArgSplat[0] = 0;
 	BufferToReset->GCodeArgPtr = (char*)&BufferToReset->AsciiArgs.GCodeArgComment; //default first character
-}
-/*
- * this will process a line of gcode once it is in the buffer
- *
- */
-void ConvertArgs2Float(ComBuffer* WorkBuff) //COMPORT*WorkComm
-{
-	//at this point we have already read the charcters and put them in each key arg buffer so we can convert to float
-
-	//InvalidateAllCmdArgs(ExecutionPtr); //clear old variables please
-
-
-	//GCodeArgsReadyToConvert++;//signal that the line is parsed and ready to add to actionQue
-	//WorkBuff->RxLineCount --; //WorkComm->RxBuffer.RxLineCount--;//drop down a command please
-	//ComBuffer* WorkBuff = WorkComm->UrgentFlag? &WorkComm->RxUrgentBuffer: &WorkComm->RxBuffer;
-//	--------------------------------------------------------------------------------------
-	//now the execution pointer is pointing to the correct base address in the cmdque
-	//so we can directly convert to float from the ascii buffer to the correct cmdque location
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgA, &cmd_execution_ptr->A);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgB, &cmd_execution_ptr->B);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgC, &cmd_execution_ptr->C);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgD, &cmd_execution_ptr->D);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgE, &cmd_execution_ptr->E);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgF, &cmd_execution_ptr->F);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgG, &cmd_execution_ptr->G);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgH, &cmd_execution_ptr->H);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgI, &cmd_execution_ptr->I);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgJ, &cmd_execution_ptr->J);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgK, &cmd_execution_ptr->K);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgL, &cmd_execution_ptr->L);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgM, &cmd_execution_ptr->M);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgN, &cmd_execution_ptr->N);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgO, &cmd_execution_ptr->O);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgP, &cmd_execution_ptr->P);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgQ, &cmd_execution_ptr->Q);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgR, &cmd_execution_ptr->R);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgS, &cmd_execution_ptr->S);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgT, &cmd_execution_ptr->T);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgU, &cmd_execution_ptr->U);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgV, &cmd_execution_ptr->V);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgW, &cmd_execution_ptr->W);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgX, &cmd_execution_ptr->X);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgY, &cmd_execution_ptr->Y);
-	processArgs((char*)&WorkBuff->AsciiArgs.GCodeArgZ, &cmd_execution_ptr->Z);
-	strcpy((char*)&cmd_execution_ptr->Comment[0], WorkBuff->AsciiArgs.GCodeArgComment);
-	cmd_execution_ptr->cmdType = UNDEFINED;
-	cmd_execution_ptr->cmdLink = UNPROCESSED;
-
-	cmd_execution_ptr->N = ++parser_gcodeLineNumber; //update the gcodelinenumber for error and debug syncronization
-	//if (ARG_N_PRESENT) parser_gcodeLineNumber = ARG_N; //update to new line number if gcode has  N###  as argument
-
-	//the characters are already preprocessed so you can
-	//SplitCurrentGcodeLine2Arguments(WorkRxBuffer);  //load each of the argument directly into their respective buffers
-	//GCodeArgsReadyToConvert=2;  //set the command waiting to process flag, so we dont step on our data
-	//WorkComm->UrgentFlag=0; //turn off the hot flag
-	//WorkComm->AcksWaiting++;//send an ack please
-	cmd_nextcommand_insertion_pointer++;
-	if (cmd_nextcommand_insertion_pointer >= (SIZE_OF_COMMAND_QUEUE))  cmd_nextcommand_insertion_pointer = 1;
-	cmd_commands_in_que++; //increment the commands on the que to do
-
-	WorkBuff->ReadyForAtof = 0;
-	parser_parsed_line_counter++;
-	parser_reset_gcode_buffer(WorkBuff); //clear first character of each argument and get ready for next char
-}
-
-
-//this next method will take incoming characters one at a time and split them up into the gcode key letter arguments
-//this is to prepare for the conversion to actual numberic values,   i.e X100  will convert to the variable X=100;
-void Process_TERMINATE_WAIT_CHAR()
-{
-	//			//kill/reset and wait timers
-	//			_g4DwellTimer = 0;//turn off any processing wait timer so print can continue
-	//			_requestToPauseAtEndOfMove = FALSE;//turn off potential waits as well
-	//			_requestToPauseAtEndOfLayer = FALSE;
-	//			_requestToAbortAtEndOfMove = FALSE;
-	//			_gcodePaused = FALSE;
-	//			_MailBoxes._waitingFor.flags.u32 = 0;
-	//			sendchar(TERMINATE_WAIT_CHAR);  // echo back to say term_wait has been processed
-	//
-	//			if (motionQ_notEmpty())
-	//			{ // restart the motionQ
-	//				//motionQ_executeMove();
-	//				motionQ_setCountdownDelayToExecuteMove(1);  // will execute move on next call to Sequence Engine
-	//			}
-
-}
-//this method will take the characters from the input buffer and parse them into
-//the ascii args buffers, in preperation for converting to Float
-//once a full line has been processed, a flag is set CommandReadyToProcessFlag=1;
-//this will signal that the line is complete and that is ok to convert to float
-//to prevent stepping on the
-void parser_incomming_into_gcodes()
-{
-	if (cmd_commands_in_que < (SIZE_OF_COMMAND_QUEUE - 3))
-	{
-		if (comm_raw_rx_combuffer.ReadyForAtof == 1)
-		{
-			cmd_execution_ptr = &cmd_que[cmd_nextcommand_insertion_pointer];
-			ConvertArgs2Float(&comm_raw_rx_combuffer);
-			//MasterCommPort->AcksWaiting++; //release one line of buffer
-			return;
-		}//only 1 conversion per slice
-		if (comm_raw_rx_combuffer.Head != comm_raw_rx_combuffer.Tail)
-		{
-			parser_rx_characters(&comm_raw_rx_combuffer);
-			return;
-		}
-		//		//first check to see if we have full line to convert to floats and add to cmdque
-		//		if (comm_raw_rx_urgent_combuffer.ReadyForAtof == 1)
-		//		{
-		//			cmd_execution_ptr = &cmd_que[0];
-		//			ConvertArgs2Float(&comm_raw_rx_urgent_combuffer);
-		//			//			MasterCommPort->AcksWaiting++;//release one line of buffer
-		//			return;
-		//		}//only 1 conversion per slice
-		//		if (comm_raw_rx_urgent_combuffer.Head != comm_raw_rx_urgent_combuffer.Tail)
-		//		{
-		//			parser_rx_characters(&comm_raw_rx_urgent_combuffer);
-		//			return;
-		//		}
-	}
 }

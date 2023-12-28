@@ -109,4 +109,6 @@ void comm_init_buffer(COMPORT* CMPORT, uint8_t *rx_buffer, size_t rx_size, uint8
 void comm_process_rx_characters(COMPORT* comport, uint8_t* buf, uint16_t len);
 void comm_add_buffer_to_buffer(ComBuffer *targetBuffer, uint8_t* buf, uint16_t len);
 void comm_add_string_to_buffer(ComBuffer *targetBuffer, char* SourceString);
+
+void comm_check_rx();
 void comm_check_tx();

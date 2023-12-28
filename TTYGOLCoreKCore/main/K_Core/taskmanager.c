@@ -9,8 +9,8 @@
 #include "K_Core/communication/parser.h"
 #include "K_Core/communication/communication.h"
 #include "K_Core/tools/tools.h"
-#include "K_Core/execution/cmdprocessor.h"
 #include "K_Core/execution/sequence.h"
+#include "K_Core/execution/can.h"
 
 esp_timer_handle_t systickTimer;
 
@@ -22,8 +22,8 @@ const PFUNC F1000HZ[NUM_1000HZ] =
 {
 	Spare,
 	// keep as last call in this array
-	comm_check_tx,
-	Spare,
+	comm_check_rx, //serial_uart_read_slice, we can't use this here. 
+	comm_check_tx, 
 	parser_incomming_into_gcodes,
 	Spare,
 	seq_sequence,
@@ -60,7 +60,7 @@ const PFUNC F1HZ[NUM_1HZ] =
 	Spare,
 	Spare,
 	Spare,
-	Spare,
+	tool_random_test,
 	Spare,
 	CheckBluetoothConnection,
 	ReportToolInfo,
@@ -117,6 +117,8 @@ void BlinkHeartBeat(void)
 	// else gpio_set_level(LCD_BL, 0);
 	//AddSerialStringToBuffer(&ComUart.TxBuffer, "a");
 	//AddSerialStringToBuffer(&Com485.TxBuffer, "b");
+	
+	
 }
 
 void CheckBluetoothConnection(void)

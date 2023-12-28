@@ -39,6 +39,10 @@
 extern const char *TAG;
 extern SYSTEMCONFIG systemconfig;
 extern bool IsInitialized;
+extern uint8_t SoapString[SOAP_STRING_SIZE];
 
 bool load_configuration();
 bool save_configuration();
+
+bool load_soapstring();
+bool save_soapstring();
