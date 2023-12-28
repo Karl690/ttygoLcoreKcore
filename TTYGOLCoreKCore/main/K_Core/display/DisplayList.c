@@ -33,7 +33,7 @@ DisplayVariableInfo BluetoothVarsTable[] = {
 	{ &toolInfo.Address, "Address", FUNC_INT, COLOR_WHITE, COLOR_GREEN, 0, NULL },
 	{ &ble_server_status, "STATUS", FUNC_BAR_STATUS, COLOR_WHITE, COLOR_GREEN, (uint32_t)(void*)BLE_STATUS, NULL },
 	{ &ble_server_total_sent, "XMT#", FUNC_INT, COLOR_WHITE, COLOR_GREEN, 0, NULL },
-	{ &ble_server_status, "REV#", FUNC_INT, COLOR_WHITE, COLOR_RED, 0, NULL },
+	{ &ble_server_total_received, "REV#", FUNC_INT, COLOR_WHITE, COLOR_RED, 0, NULL },
 	{ 0 },
 };
 
