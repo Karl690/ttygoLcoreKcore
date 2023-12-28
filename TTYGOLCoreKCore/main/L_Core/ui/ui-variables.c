@@ -75,7 +75,7 @@ lv_obj_t* ui_variables_update_list(void* obj)
 	lv_obj_t* panel = lv_obj_create(ui_variables_screen);
 	lv_obj_clear_flag(panel, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_CLICKABLE); /// Flags	
 	lv_obj_add_flag(panel, LV_OBJ_FLAG_HIDDEN);
-	lv_obj_set_size(panel, LV_PCT(100), LV_PCT(100));
+	lv_obj_set_size(panel, SCREEN_WIDTH, SCREEN_HEIGHT);
 	lv_obj_set_style_bg_color(panel, lv_color_hex(UI_BACKGROUND_COLOR), LV_PART_MAIN);
 	lv_obj_align(panel, LV_ALIGN_TOP_MID, 0, 0);
 	lv_obj_set_style_pad_all(panel, 0, LV_PART_MAIN);
