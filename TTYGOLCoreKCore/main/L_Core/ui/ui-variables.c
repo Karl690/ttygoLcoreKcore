@@ -9,6 +9,7 @@ lv_obj_t* ui_variables_vars_panels[DISPLAY_VAR_LIST_SIZE];
 lv_obj_t* ui_variables_selected_panel = NULL;
 DISPLAY_VAR_TYPE ui_variables_selected_index;
 
+uint8_t ui_variable_temp_string[256] = { 0 };
 void ui_variables_refresh_list()
 {
 	if (!ui_variables_selected_panel) return;
@@ -57,6 +58,33 @@ void ui_variables_refresh_list()
 			lv_label_set_text_fmt(obj, "%s", values[*(uint8_t*)ui_info[i].VariablePointer]); //*(uint8_t*)ui_info[i].VariablePointer]
 			break;
 			}
+		case FUNC_MEMDISPASCIIHEX: {
+			uint8_t* MemoryDumpPointer = (uint8_t*)ui_info[i].VariablePointer;
+			char* temp = (char*)ui_variable_temp_string;
+			char workChar;
+			char workstring[9] = "        "; //dummy empty string
+			memset(ui_variable_temp_string, 0, 40);
+			for (int count = 0; count < 5; count++)
+			{
+				//if (*MemoryDumpPointer > 0x20)
+				workChar = *(MemoryDumpPointer + count);
+				if ((workChar <= '~')&&(workChar >= ' '))
+				{
+					workstring[count] = workChar;	
+				}
+				else
+				{
+					workstring[count] = '-';	
+				}
+				sprintf(temp, "%02X ", workChar);
+				temp += 3;
+		
+			}
+			strcat((char*)ui_variable_temp_string, "  ");
+			strcat((char*)ui_variable_temp_string, workstring);
+			lv_label_set_text_fmt(obj, "%s", ui_variable_temp_string);
+			}
+			break;
 		default:
 			break;
 		}
@@ -97,8 +125,28 @@ lv_obj_t* ui_variables_update_list(void* obj)
 			lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 			lv_label_set_text(label, ui_info[i].Label);
 		}
-		else
+		else if (ui_info[i].FuncType == FUNC_LABEL)
 		{
+			line_height = 30;
+			item = ui_create_titlebar(panel, ui_info[i].Color_1);
+			lv_obj_set_style_pad_all(item, 2, LV_PART_MAIN);
+			label = lv_label_create(item);	
+			lv_obj_set_size(item, LV_PCT(50), 20);			
+			lv_obj_set_style_text_color(label, lv_color_hex(ui_info[i].Color_2), LV_PART_MAIN);	
+			lv_obj_set_style_text_font(label, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);	
+			lv_obj_align(label, LV_ALIGN_LEFT_MID, 0, 0);
+			lv_label_set_text(label, ui_info[i].Label);
+		} else if (ui_info[i].FuncType == FUNC_MEMDISPASCIIHEX)
+		{
+			line_height = 20;
+			item = lv_obj_create(panel);
+			lv_obj_set_size(item, SCREEN_WIDTH, line_height);
+			lv_obj_set_style_pad_all(item, 2, LV_PART_MAIN);
+			value = lv_label_create(item);
+			lv_obj_set_align(value, LV_ALIGN_LEFT_MID);			
+			ui_info[i].lv_object = value;
+			lv_label_set_recolor(value, true);	
+		} else {
 			line_height = 25;
 			item = lv_obj_create(panel);
 			lv_obj_set_size(item, LV_PCT(100), line_height);

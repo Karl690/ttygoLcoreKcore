@@ -2,6 +2,7 @@
 #include <stdint.h>
 typedef enum {
 	FUNC_TITLE,
+	FUNC_LABEL,
 	FUNC_INT,
 	FUNC_INT16,
 	FUNC_INT32,

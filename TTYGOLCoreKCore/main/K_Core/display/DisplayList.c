@@ -33,9 +33,15 @@ DisplayVariableInfo BluetoothVarsTable[] = {
 	{ &toolInfo.Address, "Address", FUNC_INT, COLOR_WHITE, COLOR_GREEN, 0, NULL },
 	{ &ble_server_status, "STATUS", FUNC_BAR_STATUS, COLOR_WHITE, COLOR_GREEN, (uint32_t)(void*)BLE_STATUS, NULL },
 	{ &ble_server_total_sent, "XMT#", FUNC_INT, COLOR_WHITE, COLOR_GREEN, 0, NULL },
-	{ &ble_server_last_xmt, "XMT", FUNC_ASCII, COLOR_WHITE, COLOR_GREEN, 0, NULL },
-	{ &ble_server_total_received, "REV#", FUNC_INT, COLOR_WHITE, COLOR_RED, 0, NULL },
-	{ &ble_server_last_rev, "REV", FUNC_ASCII, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ (ble_server_last_xmt+0), "", FUNC_MEMDISPASCIIHEX, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ (ble_server_last_xmt + 5), "", FUNC_MEMDISPASCIIHEX, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ (ble_server_last_xmt + 10), "", FUNC_MEMDISPASCIIHEX, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ (ble_server_last_xmt + 15), "", FUNC_MEMDISPASCIIHEX, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ &ble_server_total_received, "REV#", FUNC_INT, COLOR_BLACK, COLOR_GREEN, 0, NULL },
+	{ (ble_server_last_rev + 0), "", FUNC_MEMDISPASCIIHEX, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ (ble_server_last_rev + 5), "", FUNC_MEMDISPASCIIHEX, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ (ble_server_last_rev + 10), "", FUNC_MEMDISPASCIIHEX, COLOR_WHITE, COLOR_GREEN, 0, NULL },
+	{ (ble_server_last_rev + 15), "", FUNC_MEMDISPASCIIHEX, COLOR_WHITE, COLOR_GREEN, 0, NULL },
 	{ 0 },
 };
 

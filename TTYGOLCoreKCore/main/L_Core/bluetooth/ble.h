@@ -116,8 +116,8 @@ extern uint8_t is_server_connected;
 extern uint64_t ble_server_total_sent;
 extern uint64_t ble_server_total_received;
 
-extern char ble_server_last_xmt[10];
-extern char ble_server_last_rev[10];
+extern char ble_server_last_xmt[0x20];
+extern char ble_server_last_rev[0x20];
 extern uint16_t spp_client_conn_id;
 extern uint16_t spp_client_mtu_size;
 
